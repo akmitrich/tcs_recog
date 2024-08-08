@@ -1,5 +1,9 @@
 use base64::Engine;
 
+mod tcs {
+    tonic::include_proto!("tinkoff.cloud.stt.v1");
+}
+
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
@@ -10,6 +14,7 @@ async fn main() {
     let jwt = generate(&api_key, &secret_key);
 
     println!("JWT={:?}", jwt);
+    println!("OK {:?}", tcs::AudioEncoding::Linear16);
 }
 
 fn generate(api_key: &str, secret_key: &[u8]) -> String {
