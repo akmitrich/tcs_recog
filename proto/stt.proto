@@ -6,7 +6,6 @@ option objc_class_prefix = 'TVKSR';
 
 import "google/protobuf/duration.proto";
 import "google/api/annotations.proto";
-// import "proto/longrunning.proto";
 
 service SpeechToText { // Speech recognition.
   rpc Recognize(RecognizeRequest) returns (RecognizeResponse) { // Method to recognize whole audio at once: sending complete audio, getting complete recognition result.
@@ -17,13 +16,6 @@ service SpeechToText { // Speech recognition.
   }
   rpc StreamingRecognize(stream StreamingRecognizeRequest)
     returns (stream StreamingRecognizeResponse); // Method for streaming recognition.
-
-  // rpc LongRunningRecognize(LongRunningRecognizeRequest) returns (longrunning.v1.Operation) { // Method to create longrunning recognition operation. Created operation will persist for a limited time and will be deleted after that time has expired.
-  //   option (google.api.http) = {
-  //     post: "/v1/stt:longrunningrecognize"
-  //     body: "*"
-  //   };
-  // }
 
   rpc StreamingUnaryRecognize(stream StreamingUnaryRecognizeRequest) returns (RecognizeResponse) { // Method to synchronous recognize audio stream. Returns recognition result after all audio has been sent and processed.
     option (google.api.http) = {

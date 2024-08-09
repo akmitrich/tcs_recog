@@ -12,9 +12,49 @@ async fn main() {
         .decode(std::env::var("TCS_SECRET").unwrap())
         .unwrap();
     let jwt = generate(&api_key, &secret_key);
-
     println!("JWT={:?}", jwt);
-    println!("OK {:?}", tcs::AudioEncoding::Linear16);
+
+    let req = tcs::StreamingRecognizeRequest {
+        streaming_request: Some(
+            tcs::streaming_recognize_request::StreamingRequest::StreamingConfig(
+                tcs::StreamingRecognitionConfig {
+                    config: Some(tcs::RecognitionConfig {
+                        encoding: tcs::AudioEncoding::Linear16.into(),
+                        sample_rate_hertz: 8000,
+                        language_code: String::from("ru-RU"),
+                        max_alternatives: 1,
+                        profanity_filter: false,
+                        speech_contexts: vec![],
+                        enable_automatic_punctuation: true,
+                        model: String::new(),
+                        num_channels: 1,
+                        enable_denormalization: true,
+                        enable_sentiment_analysis: true,
+                        enable_gender_identification: true,
+                        vad: Some(tcs::recognition_config::Vad::VadConfig(
+                            tcs::VoiceActivityDetectionConfig {
+                                min_speech_duration: 0.0,
+                                max_speech_duration: 20.0,
+                                silence_duration_threshold: 1.,
+                                silence_prob_threshold: 0.5,
+                                aggressiveness: 0.5,
+                                silence_max: 2.0,
+                                silence_min: 1.0,
+                            },
+                        )),
+                    }),
+                    single_utterance: false,
+                    interim_results_config: Some(tcs::InterimResultsConfig {
+                        enable_interim_results: false,
+                        interval: 0.5,
+                    }),
+                },
+            ),
+        ),
+    };
+    let mut client = grpc_client().await;
+
+    println!("OK {:?} --- {:?}", client, req);
 }
 
 fn generate(api_key: &str, secret_key: &[u8]) -> String {
@@ -35,4 +75,21 @@ fn generate(api_key: &str, secret_key: &[u8]) -> String {
         &jsonwebtoken::EncodingKey::from_secret(secret_key),
     )
     .unwrap()
+}
+
+pub fn tls_config() -> tonic::transport::ClientTlsConfig {
+    static CERT_PEM: &[u8] = include_bytes!("/etc/ssl/certs/GlobalSign_Root_CA.pem");
+    let cert = tonic::transport::Certificate::from_pem(CERT_PEM);
+    tonic::transport::ClientTlsConfig::new().ca_certificate(cert)
+}
+
+async fn grpc_client() -> tcs::speech_to_text_client::SpeechToTextClient<tonic::transport::Channel>
+{
+    let channel = tonic::transport::Channel::from_static("https://tts.api.cloud.yandex.net:443")
+        .tls_config(tls_config())
+        .unwrap()
+        .connect()
+        .await
+        .unwrap();
+    tcs::speech_to_text_client::SpeechToTextClient::new(channel)
 }
