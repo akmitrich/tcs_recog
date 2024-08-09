@@ -53,7 +53,11 @@ async fn main() {
         ),
     };
     let mut client = grpc_client().await;
-
+    let src = create_stream();
+    let resp = client
+        .streaming_recognize(tonic::Request::new(src))
+        .await
+        .unwrap();
     println!("OK {:?} --- {:?}", client, req);
 }
 
@@ -77,15 +81,17 @@ fn generate(api_key: &str, secret_key: &[u8]) -> String {
     .unwrap()
 }
 
+fn create_stream() -> impl tokio_stream::Stream<Item = tcs::StreamingRecognizeRequest> {
+    tokio_stream::iter(vec![])
+}
+
 pub fn tls_config() -> tonic::transport::ClientTlsConfig {
-    static CERT_PEM: &[u8] = include_bytes!("/etc/ssl/certs/GlobalSign_Root_CA.pem");
-    let cert = tonic::transport::Certificate::from_pem(CERT_PEM);
-    tonic::transport::ClientTlsConfig::new().ca_certificate(cert)
+    tonic::transport::ClientTlsConfig::new().with_native_roots()
 }
 
 async fn grpc_client() -> tcs::speech_to_text_client::SpeechToTextClient<tonic::transport::Channel>
 {
-    let channel = tonic::transport::Channel::from_static("https://tts.api.cloud.yandex.net:443")
+    let channel = tonic::transport::Channel::from_static("https://api.tinkoff.ai:443")
         .tls_config(tls_config())
         .unwrap()
         .connect()
