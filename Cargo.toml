@@ -19,7 +19,6 @@ tokio = { version = "1", features = [
 ] }
 tokio-stream = "0.1"
 tonic = { version = "0.12", features = ["tls", "tls-roots"] }
-tonic-openssl = "0.2"
 
 [build-dependencies]
 tonic-build = "0.12"
